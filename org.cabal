@@ -28,4 +28,4 @@ executable Main
 
 source-repository head
   type:     git
-  location: https://github.com/joelelmercarlson/stack
+  location: https://github.com/joelelmercarlson/coding
