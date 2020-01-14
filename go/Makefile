@@ -1,94 +1,99 @@
+# dir
+GOPATH := $(HOME)/go
+BIN := $(GOPATH)/bin
+SRC := $(GOPATH)/src
+TMP := /tmp
+VAR := /var
+VARTMP := $(VAR)$(TMP)
+
+# tools
+CURL  := /usr/bin/curl
+UNAME := $(shell uname -s|tr 'A-Z' 'a-z')
+GODL  := $(shell printf "https://dl.google.com/go/go1.13.6.%s-amd64.tar.gz" $(UNAME))
+
 # git
 GIT     := git
 GITDIFF := $(GIT) diff
 GITLOG  := $(GIT) log
+GITPULL := $(GIT) pull
+GITSTATUS := $(GIT) status
 
 # go
 GO        := go
 GOBUILD   := $(GO) build
+GODOC     := godoc
+GOLINT    := golint
 GOCLEAN   := $(GO) clean
 GOGET     := $(GO) get
 GOINSTALL := $(GO) install
 GOLIST    := $(GO) list
 GOTEST    := $(GO) test
 
-# package: confidence
-PACKAGE := confidence
-BIN     := $(GOPATH)/bin
-DATA    := $(GOPATH)/data
-SRC     := $(GOPATH)/src
-BASE    := $(SRC)/$(PACKAGE)
-PKGS    := $(shell $(GOLIST) ./... | grep -v /vendor)
-
-# data: confidence
-BINARY  := $(BIN)/$(PACKAGE)
-DATA1   := $(DATA)/confidence.json
-DATA3   := $(DATA)/2019_osfi_compute.json
-
-# cycle
-PACKAGE1 := cycle
-BINARY1 := $(BIN)/$(PACKAGE1)
-DATA2 := $(DATA)/rally.json
-
 # tools
-COMMIT := $(BIN)/commit
-OOO    := $(BIN)/ooo
+COMMIT   := $(BIN)/commit
+FLYWHEEL := $(bin)/flywheel
+GORE     := $(BIN)/gore
+OOO      := $(BIN)/ooo
 
-.PHONY: all test build clean run
-all: build test
+all: emacs gore libraries
+.PHONY: all
 
-build: 
-	cd $(BIN) && $(GOBUILD) $(PACKAGE)
+buildctl: pull
+	$(GOINSTALL) buildctl
+	$(BIN)/buildctl
 
 clean:
-	$(GOCLEAN) && rm -f $(BINARY) $(COMMIT) $(OOO)
+	$(GOCLEAN)
 
 commit:
 	$(COMMIT)
 
-confidence:
-	@cd $(BIN) && $(GOBUILD) $(PACKAGE)
-	@$(GORUN) $(BINARY) < $(DATA1)
-
-2019:
-	@cd $(BIN) && $(GOBUILD) $(PACKAGE)
-	@$(GORUN) $(BINARY) < $(DATA3)
-
-adjust:
-	cd $(BIN) && $(GOBUILD) $(PACKAGE1)
-	$(GORUN) $(BINARY1) adjust < $(DATA2)
-
-cycle:
-	@cd $(BIN) && $(GOBUILD) $(PACKAGE1)
-	@$(GORUN) $(BINARY1) < $(DATA2)
-
-debug:
-	cd $(BIN) && $(GOBUILD) $(PACKAGE1)
-	$(GORUN) $(BINARY1) debug < $(DATA2)
-
 diff:
 	$(GITDIFF)
+
+emacs:
+	$(GOGET) github.com/nsf/gocode
+	$(GOGET) github.com/rogpeppe/godef
+	$(GOGET) golang.org/x/tools/cmd/guru
+	$(GOGET) golang.org/x/tools/cmd/gorename
+	$(GOGET) golang.org/x/tools/cmd/goimports
+	$(GOGET) golang.org/x/tools/cmd/godoc
+
+download:
+	cd $(VARTMP) ; $(CURL) -O $(GODL)
+
+gore:
+	GO11MODULE=off $(GOGET) golang.org/x/lint/golint
+	GO111MODULE=off $(GOGET) github.com/motemen/gore/cmd/gore
+
+immutable: pull
+	$(GOINSTALL) immutable
+	$(BIN)/immutable
+
+libraries:
+	$(GOGET) github.com/bndr/gojenkins
+	$(GOGET) github.com/calbucci/go-htmlparser
 
 log:
 	$(GITLOG)
 
-ooo:
-	@cd $(BIN) && $(GOBUILD) ooo
-	@$(GORUN) $(OOO)
+pull:
+	$(GITPULL)
 
 run:
-	@echo "confidence, cycle both require json on stdin"
-	@echo "example: confidence < confidence.json"
-	@echo
-	@echo "confidence: " $(BINARY)
-	@echo "cycle     : " $(BINARY1)
+	@echo "make godl"
+	@echo "make all"
+	@echo "cat <<EOF > hello.go"
+	@echo "package main"
+	@echo "import \"fmt\""
+	@echo "func main() { fmt.Println(\"Hello World\") }"
+	@echo "EOF"
+	@echo "go run hello.go"
 
 status:
-	$(GIT) status
-
-test:
-	$(GOTEST) -v $(PKGS)
+	$(GITSTATUS)
 
 tools:
-	cd $(BIN) && $(GOBUILD) commit
-	cd $(BIN) && $(GOBUILD) ooo
+	$(GOINSTALL) commit
+	$(GOINSTALL) ooo
+	$(GOINSTALL) flywheel
