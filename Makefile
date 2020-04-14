@@ -1,36 +1,20 @@
-CWD     := $(shell pwd)
-ORGPATH := $(CWD)
-STACK   := stack
-BUILD   := $(STACK) build
-COMMIT  := $(ORGPATH)/commit.hs
-NEXT    := $(STACK) exec Main next
-ORG     := $(STACK) exec Main
-STUDY   := $(STACK) exec Main study
-
-GIT       := git
-GITDIFF   := $(GIT) diff
-GITLOG    := $(GIT) log
+# git helpers
+GIT     := git
+GITDIFF := $(GIT) diff
+GITLOG  := $(GIT) log
+GITPULL := $(GIT) pull
 GITSTATUS := $(GIT) status
-GITPULL   := $(GIT) pull
-GITPUSH   := $(GIT) push
 
-build:
-	$(BUILD)
-	$(ORG)
-
-commit:
-	$(COMMIT)
-
-next:
-	$(BUILD)
-	$(NEXT)
-
-study:
-	$(BUILD)
-	$(STUDY)
+.PHONY: init test all
 
 diff:
 	$(GITDIFF)
+
+init:
+	pip3 install -r requirements.txt
+
+install:
+	python3 ./setup.py develop --user
 
 log:
 	$(GITLOG)
@@ -38,24 +22,12 @@ log:
 pull:
 	$(GITPULL)
 
-push:
-	$(GITPUSH)
-
-help:
-	@echo "workflow is one of {build, next, study} then commit."
-	@echo "  make build  -> build org"
-	@echo "  make next   -> build +1d org"
-	@echo "  make study  -> build study"
-	@echo "make commit   -> git commit"
-
-run:
-	@echo "stack and haskell is used with org"
+pylinter:
+	python3 ./pylinter.py
 
 status:
 	$(GITSTATUS)
 
-upgrade:
-	$(STACK) upgrade
+test:
+	python3 ./setup.py test
 
-version:
-	$(STACK) --version
