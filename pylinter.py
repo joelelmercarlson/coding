@@ -1,14 +1,32 @@
-"""pylinter -- report pylint scores on our .py"""
+"""pylinter automated
+
+Abstract
+========
+pylinter utilize pylint on our python.
+
+
+Requirements
+============
+| YAML -- file containing what directories to scan.
+
+
+Example
+=======
+>>> import pylinter
+>>> YAML = 'Manifest.yaml'
+>>> RUNLIST = pylinter.loader(YAML)
+>>> pylinter.run(RUNLIST)
+"""
 import os
 import re
+import yaml
 
 __author__ = 'Joel E Carlson'
 __credits__ = ['joel.elmer.carlson@gmail.com']
 __email__ = __credits__[0]
-__pylint__ = '10.00/10'
 
 def banner(message):
-    """banner -- print a banner"""
+    """:param message: (str)"""
     counter = len(message)
     rule = "="
     while counter > 0:
@@ -17,8 +35,18 @@ def banner(message):
     print(message)
     print(rule)
 
+def loader(filename):
+    """loader reads file.yaml
+
+    :param filename: (str)
+    :returns: contents (yaml)"""
+    contents = ''
+    with open(filename, 'r') as stream:
+        contents = yaml.load(stream, Loader=yaml.FullLoader)
+    return contents
+
 def pylint(filename):
-    """pylint -- call pylint command"""
+    """:param filename: (str)"""
     if filename is None:
         return
     cmd = "%s %s" %('pylint', filename)
@@ -26,14 +54,17 @@ def pylint(filename):
     os.system(cmd)
 
 def py_filter(filename):
-    """py_filter -- return *.py"""
+    """:param filename: (str)
+    :returns: match (str)"""
     match = re.search(r'.*.py$', filename)
     if match:
         return match.group()
     return None
 
 def walk(directory):
-    """walk -- pylint a directory"""
+    """walk a directory w/ pylint
+
+    :param directory: (str)"""
     dir_list = os.listdir(directory)
     files = []
     for i in dir_list:
@@ -43,11 +74,15 @@ def walk(directory):
     for i in files:
         pylint(i)
 
-def run():
-    """run -- add to walk(directory) when ready"""
-    walk('.')
-    walk('team')
+def run(runlist):
+    """run walks the runlist
+
+    :param runlist: (dict)"""
+    for value in runlist.values():
+        for directory in value:
+            walk(directory)
 
 if __name__ == '__main__':
-    banner("pylint scores. Goal is 8.0/10 or better.")
-    run()
+    YAML = 'Manifest.yaml'
+    RUNLIST = loader(YAML)
+    run(RUNLIST)
