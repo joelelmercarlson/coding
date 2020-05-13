@@ -24,8 +24,8 @@ def checkpoint(status):
     elapsed = "%02.2f" %(status['duration'])
     print(f'[ {verb} ] {name} at {when}... elapsed={elapsed}, result={result}')
 
-def factorial(filename, number=0):
-    """factorial
+async def factorial(filename, number=0):
+    """factorial async
 
     :param filename: (str)
     :param number: (int)
@@ -34,7 +34,7 @@ def factorial(filename, number=0):
     fact = 1
     for i in range(2, number + 1):
         fact *= i
-        time.sleep(1)
+        await asyncio.sleep(1)
     return fact
 
 def green(message):
@@ -74,13 +74,13 @@ async def main():
         stage('input', filename, factorial, kwargs={'parent': 'init', 'number': 2}),
         stage('serverdata', filename, factorial, kwargs={'parent': 'input', 'number': 2}),
         stage('powercheck', filename, factorial, kwargs={'parent': 'serverdata', 'number': 3}),
-        stage('applybios', filename, factorial, kwargs={'parent': 'powercheck', 'number': 5}),
-        stage('raidsetup', filename, factorial, kwargs={'parent': 'powercheck', 'number': 9}),
+        stage('applybios', filename, factorial, kwargs={'parent': 'powercheck', 'number': 10}),
+        stage('raidsetup', filename, factorial, kwargs={'parent': 'powercheck', 'number': 5}),
         stage('poweroff', filename, factorial, kwargs={'parent': 'raidsetup', 'number': 3}),
         stage('isocreate', filename, factorial, kwargs={'parent': 'serverdata', 'number': 5}),
-        stage('deploy', filename, factorial, kwargs={'parent': 'poweroff', 'number': 9}),
+        stage('deploy', filename, factorial, kwargs={'parent': 'poweroff', 'number': 10}),
         stage('ssh', filename, factorial, kwargs={'parent': 'deploy', 'number': 2}),
-        stage('secureboot', filename, factorial, kwargs={'parent': 'ssh', 'number': 2}),
+        stage('secureboot', filename, factorial, kwargs={'parent': 'ssh', 'number': 5}),
         stage('email', filename, factorial, kwargs={'parent': 'secureboot', 'number': 2}),
         stage('alldone', filename, factorial, kwargs={'parent': 'email', 'number': 2}),
     )
@@ -104,7 +104,7 @@ def sandbox(path='/var/tmp/', filename='stage.yaml'):
     touch(journalfile)
     return journalfile
 
-def sandbox_check(filename, number=0):
+async def sandbox_check(filename, number=0):
     """sandbox_check check the sandbox
 
     :param filename: (str)
@@ -112,7 +112,7 @@ def sandbox_check(filename, number=0):
     print('*** sandbox_check ***')
     os.system('df -h ' + filename)
     print('*********************')
-    time.sleep(number)
+    await asyncio.sleep(number)
     return True
 
 async def stage(name, filename, *args, **kwargs):
@@ -159,7 +159,7 @@ async def stage(name, filename, *args, **kwargs):
     journal(filename, run)
 
     # status=1: Run
-    result = process(filename, number)
+    result = await process(filename, number)
     await asyncio.sleep(1)
 
     run['status'] = 1
