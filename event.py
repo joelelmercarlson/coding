@@ -75,33 +75,37 @@ def red(message):
     """:returns: (str)"""
     return f'\x1b[31;1m{message}\x1b[0m'
 
-def sandbox():
-    """sandbox
+def sandbox(path='/var/tmp/', filename='stage.yaml'):
+    """sandbox creates journalfile
 
+    :param path: (str)
     :param filename: (str)
-    :returns sandbox: (str)"""
-    path = '/var/tmp'
-    filename = path + '/stage.yaml'
+    :returns journalfile: (str)"""
+    journalfile = path + filename
     os.chdir(path)
-    touch(filename)
-    return filename
+    touch(journalfile)
+    return journalfile
 
-def sandbox_check(filename):
+def sandbox_check(filename, **kwargs):
     """sandbox_check check the sandbox
 
-    :param filename: (str)"""
-    print('***')
-    os.system('uname -a')
-    os.system('df -h /var/tmp')
-    print('***')
+    :param filename: (str)
+    :param **kwargs: (dict)"""
+    print('*** sandbox_check ***')
+    for key, value in kwargs.items():
+        print(key, value)
+    os.system('df -h ' + filename)
+    print('*********************')
 
 async def stage(name, number, filename, dependent=None, *args, **kwargs):
-    """stage executes functions in *args
+    """stage executes functions in *args, **kwargs
 
-    :param name: (str)
-    :param number: (int)
-    :param filename: (yaml)
-    :param dependent: (dict)"""
+    :param name:      (str)  name of function
+    :param number:    (int)  demo arg for factorial
+    :param filename:  (yaml) journal our events
+    :param dependent: (dict) child is dependent on parent
+    :param *args:     [str]
+    :param **kwargs:  (dict)"""
     # handle dependencies and status
     status = loader(filename)
     if dependent is not None and status is not None:
@@ -126,7 +130,7 @@ async def stage(name, number, filename, dependent=None, *args, **kwargs):
 
     # status=1: Run (factorials for fun)
     for k in args:
-        k(filename)
+        k(filename, **kwargs)
         await asyncio.sleep(1)
 
     # factorials simulate something that takes time
