@@ -53,43 +53,62 @@ def loader(filename):
 
 async def main():
     """async main"""
-    filename = 'stage.yaml'
-    touch(filename)
+    filename = sandbox()
 
     await asyncio.gather(
-        stage('input', 2, filename),
-        stage('serverdata', 2, filename, {'child': 'input'}),
-        stage('powercheck', 2, filename, {'child': 'serverdata'}),
-        stage('applybios', 5, filename, {'child': 'powercheck'}),
-        stage('raidsetup', 9, filename, {'child': 'powercheck'}),
-        stage('poweroff', 2, filename, {'child': 'raidsetup'}),
-        stage('isocreate', 2, filename, {'child': 'serverdata'}),
-        stage('deploy', 9, filename, {'child': 'poweroff'}),
-        stage('ssh', 3, filename, {'child': 'deploy'}),
-        stage('secureboot', 2, filename, {'child': 'ssh'}),
-        stage('email', 2, filename, {'child': 'secureboot'}),
-        stage('alldone', 1, filename, {'child': 'email'}),
+        stage('init', 1, filename, None, sandbox_check),
+        stage('input', 2, filename, {'parent': 'init'}),
+        stage('serverdata', 2, filename, {'parent': 'input'}),
+        stage('powercheck', 2, filename, {'parent': 'serverdata'}),
+        stage('applybios', 5, filename, {'parent': 'powercheck'}),
+        stage('raidsetup', 9, filename, {'parent': 'powercheck'}),
+        stage('poweroff', 2, filename, {'parent': 'raidsetup'}),
+        stage('isocreate', 2, filename, {'parent': 'serverdata'}),
+        stage('deploy', 9, filename, {'parent': 'poweroff'}),
+        stage('ssh', 3, filename, {'parent': 'deploy'}),
+        stage('secureboot', 2, filename, {'parent': 'ssh'}),
+        stage('email', 2, filename, {'parent': 'secureboot'}),
+        stage('alldone', 1, filename, {'parent': 'email'}),
     )
 
 def red(message):
     """:returns: (str)"""
     return f'\x1b[31;1m{message}\x1b[0m'
 
-async def stage(name, number, filename, depend=None):
-    """stage executes steps
+def sandbox():
+    """sandbox
+
+    :param filename: (str)
+    :returns sandbox: (str)"""
+    path = '/var/tmp'
+    filename = path + '/stage.yaml'
+    os.chdir(path)
+    touch(filename)
+    return filename
+
+def sandbox_check(filename):
+    """sandbox_check check the sandbox
+
+    :param filename: (str)"""
+    print('***')
+    os.system('uname -a')
+    os.system('df -h /var/tmp')
+    print('***')
+
+async def stage(name, number, filename, dependent=None, *args, **kwargs):
+    """stage executes functions in *args
 
     :param name: (str)
     :param number: (int)
     :param filename: (yaml)
-    :param depend: (dict)"""
-
+    :param dependent: (dict)"""
     # handle dependencies and status
     status = loader(filename)
-    if depend is not None:
+    if dependent is not None and status is not None:
         ready = 0
         while ready < 1:
             for key, value in status.items():
-                if key == depend['child'] and value['end'] > 0:
+                if key == dependent['parent'] and value['end'] > 0:
                     ready = 1
             await asyncio.sleep(5)
             status = loader(filename)
@@ -102,18 +121,24 @@ async def stage(name, number, filename, depend=None):
            'duration': 0,
            'status': 0,
            'result': 0,
-           'depend': depend}
+           'dependent': dependent}
     journal(filename, run)
 
     # status=1: Run (factorials for fun)
+    for k in args:
+        k(filename)
+        await asyncio.sleep(1)
+
+    # factorials simulate something that takes time
+    # replace in production code w/ IO functions
     factorial = 1
     for i in range(2, number + 1):
-        await asyncio.sleep(1)
         factorial *= i
+        await asyncio.sleep(1)
 
-        run['status'] = 1
-        run['duration'] = time.time() - run['start']
-        journal(filename, run)
+    run['status'] = 1
+    run['duration'] = time.time() - run['start']
+    journal(filename, run)
 
     # status=2: Done
     run['end'] = time.time()
