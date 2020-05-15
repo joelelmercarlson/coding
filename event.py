@@ -2,6 +2,7 @@
 import asyncio
 import os
 import time
+from time import gmtime, strftime
 import sys
 import yaml
 
@@ -10,6 +11,7 @@ def checkpoint(status):
 
     :param status: (dict)"""
     name = status['name']
+    elapsed = status['duration']
     result = status['result']
     stat = status['status']
     if not stat:
@@ -21,8 +23,8 @@ def checkpoint(status):
     if stat > 1:
         verb = green('Done')
         when = status['end']
-    elapsed = "%02.2f" %(status['duration'])
-    print(f'[ {verb} ] {name} at {when}... elapsed={elapsed}, result={result}')
+    when = strftime('%X', gmtime(when))
+    print(f'[ {verb} ] {name} at {when}... elapsed={elapsed:2.2f}, result={result}')
 
 async def factorial(filename, number=0):
     """factorial async
@@ -130,7 +132,7 @@ async def stage(name, filename, *args, **kwargs):
     if len(args) > 0:
         process = args[0]
     else:
-        print(f'async def stage({name}, {filename}, {args}, {kwargs}) error')
+        print(f'{red("error")}: process missing...')
         sys.exit(1)
     for key, value in kwargs.items():
         if key == 'kwargs':
