@@ -16,7 +16,7 @@ var myGamePiece;
 var myObstacles = [];
 
 function startGame() {
-    myGamePiece = new component(30, 30, "red", 10, 120);
+    myGamePiece = new component(30, 30, "red", 225, 225, "robin");
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
 }
@@ -30,12 +30,12 @@ var myGameArea = {
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 20);
-        window.addEventListener("keydown", function (e) {
+        window.addEventListener('keydown', function (e) {
             e.preventDefault();
             myGameArea.keys = (myGameArea.keys || []);
             myGameArea.keys[e.keyCode] = (e.type == "keydown");
         })
-        window.addEventListener("keyup", function (e) {
+        window.addEventListener('keyup', function (e) {
             myGameArea.keys[e.keycode] = (e.type == "keydown");
         })
     },
@@ -56,57 +56,33 @@ function component(width, height, color, x, y, type) {
     this.type = type;
     this.width = width;
     this.height = height;
+    this.speed = 0;
+    this.angle = 0;
+    this.moveAngle = 0;
     this.x = x;
     this.y = y;
-    this.speedX = 0;
-    this.speedY = 0;
-    this.gravity = 0.01;
-    this.gravitySpeed = 0;
-    this.bounce = 0.6;
     this.update = function() {
         ctx = myGameArea.context;
         if (this.type == "text") {
             ctx.font = this.width + " " + this.height;
             ctx.fillStyle = color;
             ctx.fillText(this.text, this.x, this.y);
+        } else if (this.type == "worm") {
+                ctx.fillStyle = color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
         } else {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
             ctx.fillStyle = color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);
+            ctx.restore();
         }
     }
     this.newPos = function() {
-        this.gravitySpeed += this.gravity;
-        this.x += this.speedX;
-        this.y += this.speedY + this.gravitySpeed;
-        this.checkSpeed();
-        this.hitTop();
-        this.hitBottom();
-    }
-    this.hitBottom = function() {
-        var rockbottom = myGameArea.canvas.height - this.height;
-        if (this.y > rockbottom) {
-            this.y = rockbottom;
-            this.gravitySpeed = -(this.gravitySpeed * this.bounce);
-        }
-    }
-    this.hitTop = function() {
-         if (this.y < 0) {
-             this.y = this.bounce;
-         }
-    }
-    this.checkSpeed = function() {
-        if (this.speedY > 2) {
-            this.speedY = 2;
-        }
-        if (this.speedY < -2) {
-            this.speedY = -2;
-        }
-        if (this.speedX > 2) {
-            this.speedX = 2;
-        }
-        if (this.speedX < -2) {
-            this.speedX = -2;
-        }
+        this.angle += this.moveAngle * Math.PI / 180;
+        this.x += this.speed * Math.sin(this.angle);
+        this.y -= this.speed * Math.cos(this.angle);
     }
     this.crashWith = function(otherobj) {
         var myleft = this.x;
@@ -143,8 +119,8 @@ function updateGameArea() {
          minGap = 50;
          maxGap = 200;
          gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-         myObstacles.push(new component(10, height, "brown", x, 0));
-         myObstacles.push(new component(10, x - height - gap, "brown", x, height+gap));
+         myObstacles.push(new component(10, height, "brown", x, 0, "worm"));
+         myObstacles.push(new component(10, x - height - gap, "brown", x, height+gap, "worm"));
      }
      for (i = 0; i < myObstacles.length; i += 1) {
          myObstacles[i].x += -1;
@@ -152,44 +128,27 @@ function updateGameArea() {
      }
      myScore.text = "Worms: " + myGameArea.frameNo;
      myScore.update();
-     if (myGameArea.keys && myGameArea.keys[37]) { myGamePiece.speedX -= 1; }
-     if (myGameArea.keys && myGameArea.keys[39]) { myGamePiece.speedX += 1; }
-     if (myGameArea.keys && myGameArea.keys[38]) { myGamePiece.speedY -= 1; }
-     if (myGameArea.keys && myGameArea.keys[40]) { myGamePiece.speedY += 1; }
+     if (myGameArea.keys && myGameArea.keys[37]) { myGamePiece.moveAngle = -1; }
+     if (myGameArea.keys && myGameArea.keys[39]) { myGamePiece.moveAngle = 1; }
+     if (myGameArea.keys && myGameArea.keys[38]) { myGamePiece.speed = 1; }
+     if (myGameArea.keys && myGameArea.keys[40]) { myGamePiece.speed = -1; }
      myGamePiece.newPos();
      myGamePiece.update();
 }
 
-function moveup() {
-    myGamePiece.speedY -= 1;
-}
-
-function movedown() {
-    myGamePiece.speedY += 1;
-}
-
-function moveleft() {
-    myGamePiece.speedX -= 1;
-}
-
-function moveright() {
-     myGamePiece.speedX += 1;
-}
+ function stop() {
+     myGamePiece.speed = 0;
+ }
 
 function reset() {
-     myGamePiece.x = 10;
-     myGamePiece.y = 10;
-     myGamePiece.speedX = 0;
-     myGamePiece.speedY = 0;
+     myGamePiece.speed = 0;
+     myGamePiece.moveAngle = 0;
  }
 
 </script>
 <div style="text-align:center;width:480px;">
-  <button onclick="moveup()">UP</button><br><br>
-  <button onclick="moveleft()">LEFT</button>
-  <button onclick="moveright()">RIGHT</button><br><br>
-  <button onclick="movedown()">DOWN</button>
-  <button onclick="reset()">reset</button>
+    <button onclick="stop()">stop</button>
+    <button onclick="reset()">reset</button>
 </div>
 
 <p>
