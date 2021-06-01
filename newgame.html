@@ -14,30 +14,60 @@ canvas {
 
 var myGamePiece;
 var myObstacles = [];
+var rightPressed = false;
+var leftPressed = false;
+var upPressed = false;
+var dnPressed = false;
+var width = 640;
+var height = 480;
 
 function startGame() {
-    myGamePiece = new component(30, 30, "red", 225, 225, "robin");
+    myGamePiece = new component(30, 30, "red", 100, 100, "robin");
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
+}
+
+function keyDownHandler(e) {
+     if(e.code == "ArrowRight") {
+         rightPressed = true;
+     }
+     else if(e.code == "ArrowLeft") {
+         leftPressed = true;
+     }
+     else if(e.code == "ArrowUp") {
+         upPressed = true;
+     }
+     else if(e.code == "ArrowDown") {
+         dnPressed = true;
+     }
+
+}
+function keyUpHandler(e) {
+     if(e.code == "ArrowRight") {
+         rightPressed = false;
+     }
+     else if(e.code == "ArrowLeft") {
+         leftPressed = false;
+     }
+     else if(e.code == "ArrowUp") {
+         upPressed = false;
+     }
+     else if(e.code == "ArrowDown") {
+         dnPressed = false;
+     }
 }
 
 var myGameArea = {
     canvas : document.createElement("canvas"),
     start : function() {
-        this.canvas.width = 480;
-        this.canvas.height = 270;
+        this.canvas.width = width;
+        this.canvas.height = height;
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
         this.interval = setInterval(updateGameArea, 20);
-        window.addEventListener('keydown', function (e) {
-            e.preventDefault();
-            myGameArea.keys = (myGameArea.keys || []);
-            myGameArea.keys[e.keyCode] = (e.type == "keydown");
-        })
-        window.addEventListener('keyup', function (e) {
-            myGameArea.keys[e.keycode] = (e.type == "keydown");
-        })
+        window.addEventListener("keydown", keyDownHandler, false);
+        window.addEventListener("keyup", keyUpHandler, false);
     },
     clear : function() {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -57,7 +87,7 @@ function component(width, height, color, x, y, type) {
     this.width = width;
     this.height = height;
     this.speed = 0;
-    this.angle = 0;
+    this.angle = 90;
     this.moveAngle = 0;
     this.x = x;
     this.y = y;
@@ -106,6 +136,7 @@ function updateGameArea() {
      for (i = 0; i < myObstacles.length; i += 1) {
          if (myGamePiece.crashWith(myObstacles[i])) {
              myGameArea.stop();
+             alert("Game Over");
              return;
          }
      }
@@ -128,28 +159,23 @@ function updateGameArea() {
      }
      myScore.text = "Worms: " + myGameArea.frameNo;
      myScore.update();
-     if (myGameArea.keys && myGameArea.keys[37]) { myGamePiece.moveAngle = -1; }
-     if (myGameArea.keys && myGameArea.keys[39]) { myGamePiece.moveAngle = 1; }
-     if (myGameArea.keys && myGameArea.keys[38]) { myGamePiece.speed = 1; }
-     if (myGameArea.keys && myGameArea.keys[40]) { myGamePiece.speed = -1; }
+     if(rightPressed && myGamePiece.x < width) {
+         myGamePiece.x += 1;
+     }
+     else if(leftPressed && myGamePiece.x > 0) {
+         myGamePiece.x -= 1;
+     }
+     else if(upPressed && myGamePiece.y > 0) {
+         myGamePiece.y += 1;
+     }
+     else if(dnPressed && myGamePiece.y < height) {
+         myGamePiece.y -= 1;
+     }
+
      myGamePiece.newPos();
      myGamePiece.update();
 }
-
- function stop() {
-     myGamePiece.speed = 0;
- }
-
-function reset() {
-     myGamePiece.speed = 0;
-     myGamePiece.moveAngle = 0;
- }
-
 </script>
-<div style="text-align:center;width:480px;">
-    <button onclick="stop()">stop</button>
-    <button onclick="reset()">reset</button>
-</div>
 
 <p>
     Level 1
