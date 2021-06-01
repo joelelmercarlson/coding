@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Gamedev Canvas Workshop - lesson 10: finishing up</title>
+    <title>Robin and the Worms</title>
     <style>* { padding: 0; margin: 0; } canvas { background: #eee; display: block; margin: 0 auto; }</style>
 </head>
 <body>
@@ -36,7 +36,17 @@
     for(var c=0; c<brickColumnCount; c++) {
         bricks[c] = [];
         for(var r=0; r<brickRowCount; r++) {
-            bricks[c][r] = { x: 0, y: 0, status: 1 };
+            var clr = "#ffb6c1";
+            if ( r > 1) {
+                clr = "#ff69b4";
+            }
+            if ( r > 2) {
+                clr = "#ff1493";
+            }
+            if ( r > 3 ) {
+                clr = "#c71585";
+            }
+            bricks[c][r] = { x: 0, y: 0, status: 1, color: clr };
         }
     }
 
@@ -109,7 +119,8 @@
                     bricks[c][r].y = brickY;
                     ctx.beginPath();
                     ctx.rect(brickX, brickY, brickWidth, brickHeight);
-                    ctx.fillStyle = "#0095DD";
+                    //ctx.fillStyle = "#0095DD";
+                    ctx.fillStyle = bricks[c][r].color;
                     ctx.fill();
                     ctx.closePath();
                 }
