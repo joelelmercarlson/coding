@@ -18,11 +18,11 @@ var rightPressed = false;
 var leftPressed = false;
 var upPressed = false;
 var dnPressed = false;
-var width = 640;
-var height = 480;
+var pieceHeight = 30;
+var pieceWidth = 30;
 
 function startGame() {
-    myGamePiece = new component(30, 30, "red", 100, 100, "robin");
+    myGamePiece = new component(pieceWidth, pieceHeight, "red", 100, 100, "robin");
     myScore = new component("30px", "Consolas", "black", 280, 40, "text");
     myGameArea.start();
 }
@@ -42,6 +42,7 @@ function keyDownHandler(e) {
      }
 
 }
+
 function keyUpHandler(e) {
      if(e.code == "ArrowRight") {
          rightPressed = false;
@@ -60,8 +61,8 @@ function keyUpHandler(e) {
 var myGameArea = {
     canvas : document.createElement("canvas"),
     start : function() {
-        this.canvas.width = width;
-        this.canvas.height = height;
+        this.canvas.width = 640;
+        this.canvas.height = 480;
         this.context = this.canvas.getContext("2d");
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
@@ -87,7 +88,7 @@ function component(width, height, color, x, y, type) {
     this.width = width;
     this.height = height;
     this.speed = 0;
-    this.angle = 90;
+    this.angle = 0;
     this.moveAngle = 0;
     this.x = x;
     this.y = y;
@@ -103,6 +104,9 @@ function component(width, height, color, x, y, type) {
         } else {
             ctx.save();
             ctx.translate(this.x, this.y);
+            // rotate
+            this.angle += 2;
+            if(this.angle > 360) { this.angle = 0; }
             ctx.rotate(this.angle);
             ctx.fillStyle = color;
             ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);
@@ -159,19 +163,18 @@ function updateGameArea() {
      }
      myScore.text = "Worms: " + myGameArea.frameNo;
      myScore.update();
-     if(rightPressed && myGamePiece.x < width) {
-         myGamePiece.x += 1;
+     if(rightPressed && myGamePiece.x < 640) {
+         myGamePiece.x += 7;
      }
-     else if(leftPressed && myGamePiece.x > 0) {
-         myGamePiece.x -= 1;
+     else if(leftPressed && myGamePiece.x > pieceWidth) {
+         myGamePiece.x -= 7;
      }
-     else if(upPressed && myGamePiece.y > 0) {
-         myGamePiece.y += 1;
+     else if(upPressed && myGamePiece.y > pieceHeight) {
+         myGamePiece.y -= 7;
      }
-     else if(dnPressed && myGamePiece.y < height) {
-         myGamePiece.y -= 1;
+     else if(dnPressed && myGamePiece.y < 480) {
+         myGamePiece.y += 7;
      }
-
      myGamePiece.newPos();
      myGamePiece.update();
 }
