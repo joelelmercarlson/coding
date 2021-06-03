@@ -11,181 +11,181 @@ canvas {
 </head>
 <body onload="startGame()">
 <script>
+  var myGamePiece;
+  var myObstacles = [];
+  var rightPressed = false;
+  var leftPressed = false;
+  var upPressed = false;
+  var dnPressed = false;
+  var pieceHeight = 30;
+  var pieceWidth = 30;
+  var colors = [ "#ffc0cb", "#ffb6c1", "#ff69b4", "#ff1493", "#db7093", "#c71585" ];
 
-var myGamePiece;
-var myObstacles = [];
-var rightPressed = false;
-var leftPressed = false;
-var upPressed = false;
-var dnPressed = false;
-var pieceHeight = 30;
-var pieceWidth = 30;
+  function startGame() {
+      myGamePiece = new component(pieceWidth, pieceHeight, "red", 100, 100, "robin");
+      myScore = new component("30px", "Consolas", "black", 280, 40, "text");
+      myGameArea.start();
+  }
 
-function startGame() {
-    myGamePiece = new component(pieceWidth, pieceHeight, "red", 100, 100, "robin");
-    myScore = new component("30px", "Consolas", "black", 280, 40, "text");
-    myGameArea.start();
-}
+  function keyDownHandler(e) {
+       if(e.code == "ArrowRight") {
+           rightPressed = true;
+       }
+       else if(e.code == "ArrowLeft") {
+           leftPressed = true;
+       }
+       else if(e.code == "ArrowUp") {
+           upPressed = true;
+       }
+       else if(e.code == "ArrowDown") {
+           dnPressed = true;
+       }
 
-function keyDownHandler(e) {
-     if(e.code == "ArrowRight") {
-         rightPressed = true;
-     }
-     else if(e.code == "ArrowLeft") {
-         leftPressed = true;
-     }
-     else if(e.code == "ArrowUp") {
-         upPressed = true;
-     }
-     else if(e.code == "ArrowDown") {
-         dnPressed = true;
-     }
+  }
 
-}
+  function keyUpHandler(e) {
+       if(e.code == "ArrowRight") {
+           rightPressed = false;
+       }
+       else if(e.code == "ArrowLeft") {
+           leftPressed = false;
+       }
+       else if(e.code == "ArrowUp") {
+           upPressed = false;
+       }
+       else if(e.code == "ArrowDown") {
+           dnPressed = false;
+       }
+  }
 
-function keyUpHandler(e) {
-     if(e.code == "ArrowRight") {
-         rightPressed = false;
-     }
-     else if(e.code == "ArrowLeft") {
-         leftPressed = false;
-     }
-     else if(e.code == "ArrowUp") {
-         upPressed = false;
-     }
-     else if(e.code == "ArrowDown") {
-         dnPressed = false;
-     }
-}
+  var myGameArea = {
+      canvas : document.createElement("canvas"),
+      start : function() {
+          this.canvas.width = 640;
+          this.canvas.height = 480;
+          this.context = this.canvas.getContext("2d");
+          document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+          this.frameNo = 0;
+          this.interval = setInterval(updateGameArea, 20);
+          window.addEventListener("keydown", keyDownHandler, false);
+          window.addEventListener("keyup", keyUpHandler, false);
+      },
+      clear : function() {
+          this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      },
+      stop : function() {
+          clearInterval(this.interval);
+      }
+  }
 
-var myGameArea = {
-    canvas : document.createElement("canvas"),
-    start : function() {
-        this.canvas.width = 640;
-        this.canvas.height = 480;
-        this.context = this.canvas.getContext("2d");
-        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-        this.frameNo = 0;
-        this.interval = setInterval(updateGameArea, 20);
-        window.addEventListener("keydown", keyDownHandler, false);
-        window.addEventListener("keyup", keyUpHandler, false);
-    },
-    clear : function() {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    },
-    stop : function() {
-        clearInterval(this.interval);
-    }
-}
+  function everyinterval(n) {
+       if ((myGameArea.frameNo / n ) % 1 == 0) {return true;}
+       return false;
+  }
 
-function everyinterval(n) {
-     if ((myGameArea.frameNo / n ) % 1 == 0) {return true;}
-     return false;
-}
+  function component(width, height, color, x, y, type) {
+      this.type = type;
+      this.width = width;
+      this.height = height;
+      this.speed = 0;
+      this.angle = 0;
+      this.moveAngle = 0;
+      this.x = x;
+      this.y = y;
+      this.pick = Math.floor(Math.random() * colors.length);
+      this.update = function() {
+          ctx = myGameArea.context;
+          if (this.type == "text") {
+              ctx.font = this.width + " " + this.height;
+              ctx.fillStyle = color;
+              ctx.fillText(this.text, this.x, this.y);
+          } else if (this.type == "worm") {
+                  ctx.fillStyle = colors[this.pick];
+                  ctx.fillRect(this.x, this.y, this.width, this.height);
+          } else {
+              ctx.save();
+              ctx.translate(this.x, this.y);
+              // rotate
+              this.angle += 2;
+              if(this.angle > 360) { this.angle = 0; }
+              ctx.rotate(this.angle);
+              ctx.fillStyle = color;
+              ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);
+              ctx.restore();
+          }
+      }
+      this.move = function() {
+          if(rightPressed && this.x < 640) {
+              this.x += 7;
+          }
+          else if(leftPressed && this.x > this.width / 2) {
+              this.x -= 7;
+          }
+          else if(upPressed && this.y > this.height / 2) {
+              this.y -= 7;
+          }
+          else if(dnPressed && this.y < 480) {
+              this.y += 7;
+          }
+      }
+      this.newPos = function() {
+          this.angle += this.moveAngle * Math.PI / 180;
+          this.x += this.speed * Math.sin(this.angle);
+          this.y -= this.speed * Math.cos(this.angle);
+      }
+      this.crashWith = function(otherobj) {
+          var myleft = this.x;
+          var myright = this.x + (this.width);
+          var mytop = this.y;
+          var mybottom = this.y + (this.height);
+          var otherleft = otherobj.x;
+          var otherright = otherobj.x + (otherobj.width);
+          var othertop = otherobj.y;
+          var otherbottom = otherobj.y + (otherobj.height);
+          var crash = true;
+          if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+              crash = false;
+          }
+          return crash;
+      }
+  }
 
-function component(width, height, color, x, y, type) {
-    this.type = type;
-    this.width = width;
-    this.height = height;
-    this.speed = 0;
-    this.angle = 0;
-    this.moveAngle = 0;
-    this.x = x;
-    this.y = y;
-    this.update = function() {
-        ctx = myGameArea.context;
-        if (this.type == "text") {
-            ctx.font = this.width + " " + this.height;
-            ctx.fillStyle = color;
-            ctx.fillText(this.text, this.x, this.y);
-        } else if (this.type == "worm") {
-                ctx.fillStyle = color;
-                ctx.fillRect(this.x, this.y, this.width, this.height);
-        } else {
-            ctx.save();
-            ctx.translate(this.x, this.y);
-            // rotate
-            this.angle += 2;
-            if(this.angle > 360) { this.angle = 0; }
-            ctx.rotate(this.angle);
-            ctx.fillStyle = color;
-            ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);
-            ctx.restore();
-        }
-    }
-    this.newPos = function() {
-        this.angle += this.moveAngle * Math.PI / 180;
-        this.x += this.speed * Math.sin(this.angle);
-        this.y -= this.speed * Math.cos(this.angle);
-    }
-    this.crashWith = function(otherobj) {
-        var myleft = this.x;
-        var myright = this.x + (this.width);
-        var mytop = this.y;
-        var mybottom = this.y + (this.height);
-        var otherleft = otherobj.x;
-        var otherright = otherobj.x + (otherobj.width);
-        var othertop = otherobj.y;
-        var otherbottom = otherobj.y + (otherobj.height);
-        var crash = true;
-        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
-            crash = false;
-        }
-        return crash;
-    }
-}
-
-function updateGameArea() {
-     var x, y;
-     for (i = 0; i < myObstacles.length; i += 1) {
-         if (myGamePiece.crashWith(myObstacles[i])) {
-             myGameArea.stop();
-             alert("Game Over");
-             return;
-         }
-     }
-     myGameArea.clear();
-     myGameArea.frameNo += 1;
-     if (myGameArea.frameNo == 1 || everyinterval(150)) {
-         x = myGameArea.canvas.width;
-         minHeight = 20;
-         maxHeight = 200;
-         height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
-         minGap = 50;
-         maxGap = 200;
-         gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
-         myObstacles.push(new component(10, height, "brown", x, 0, "worm"));
-         myObstacles.push(new component(10, x - height - gap, "brown", x, height+gap, "worm"));
-     }
-     for (i = 0; i < myObstacles.length; i += 1) {
-         myObstacles[i].x += -1;
-         myObstacles[i].update();
-     }
-     myScore.text = "Worms: " + myGameArea.frameNo;
-     myScore.update();
-     if(rightPressed && myGamePiece.x < 640) {
-         myGamePiece.x += 7;
-     }
-     else if(leftPressed && myGamePiece.x > pieceWidth) {
-         myGamePiece.x -= 7;
-     }
-     else if(upPressed && myGamePiece.y > pieceHeight) {
-         myGamePiece.y -= 7;
-     }
-     else if(dnPressed && myGamePiece.y < 480) {
-         myGamePiece.y += 7;
-     }
-     myGamePiece.newPos();
-     myGamePiece.update();
-}
+  function updateGameArea() {
+       var x, y;
+       for (i = 0; i < myObstacles.length; i += 1) {
+           if (myGamePiece.crashWith(myObstacles[i])) {
+               myGameArea.stop();
+               alert("Game Over");
+               return;
+           }
+       }
+       myGameArea.clear();
+       myGameArea.frameNo += 1;
+       if (myGameArea.frameNo == 1 || everyinterval(150)) {
+           x = myGameArea.canvas.width;
+           minHeight = 20;
+           maxHeight = 200;
+           height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+           minGap = 50;
+           maxGap = 200;
+           gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+           myObstacles.push(new component(10, height, "brown", x, 0, "worm"));
+           myObstacles.push(new component(10, x - height - gap, "brown", x, height+gap, "worm"));
+       }
+       for (i = 0; i < myObstacles.length; i += 1) {
+           myObstacles[i].x += -1;
+           myObstacles[i].update();
+       }
+       myScore.text = "Worms: " + myGameArea.frameNo;
+       myScore.update();
+       myGamePiece.move();
+       myGamePiece.newPos();
+       myGamePiece.update();
+  }
 </script>
-
 <p>
-    Level 1
-
-    Find all the worms!
+      Level 1
+      Find all the worms!
 </p>
-
-<p>If you click a button the red square will start moving. Click the same button many times, and it will move faster and faster.</p>
 </body>
 </html>
